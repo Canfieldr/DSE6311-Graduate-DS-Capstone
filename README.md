@@ -2,9 +2,9 @@
 This is the repository for the Graduate Data Science Capstone class, specifcally team Gamma, consisting of Malek Sabri, Amber Crozier, and Ryan Canfield
 
 Proposed working project title:
-Evaluating AI's role in customer satisfaction and retention
+Evaluating AI's Role in Customer Satisfaction and Retention
 
-Brief background:
+Brief Background:
 This question addresses the challenge of finding a good balance between efficiency and customer satisfaction in AI-driven customer service. AI use is continually increasing within the business model specifically in addressing customer interactions. As this increase occurs, it’s important to identify when AI is beneficial to customer relationships, and when it’s harmful. This insight can guide companies in using AI effectively without risking customer loyalty or driving up costs due to customer dissatisfaction without losing the beneficial aspects of AI
 
 Question:
