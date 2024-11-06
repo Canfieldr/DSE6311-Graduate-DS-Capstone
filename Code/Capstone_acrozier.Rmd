@@ -111,64 +111,124 @@ data_country_canada <- data %>% filter(Country == "CANADA")
 data_country_china <- data %>% filter(Country == "CHINA")
 data_country_india <- data %>% filter(Country == "INDIA")
 
-# Variables to exclude
-exclusion_variables <- c("Country", "Payment_Method_Credit_Debit", "Online_Service_Preference", 
-                         "AI_Enhance_Experience", "Payment_Method_COD", "Payment_Method_Ewallet",
-                         "Product_Category_Appliances", "Product_Category_Electronics",
-                         "Product_Category_Groceries", "Product_Category_Personal_Care",
-                         "Product_Category_Clothing")
+# Variables to exclude for demographic summaries
+demographic_variables <- c("Country", "AI_Usage", "AI_Trust", "AI_Tools_Used_Chatbots",
+                           "AI_Tools_Used_Voice&Photo_Search", "AI_Tools_Used_Virtual_Assistant",
+                           "Payment_Method_Credit_Debit", "Online_Service_Preference", "AI_Enhance_Experience",
+                           "Payment_Method_COD", "Payment_Method_Ewallet", "Product_Category_Appliances", 
+                           "Product_Category_Electronics", "Product_Category_Groceries", 
+                           "Product_Category_Personal_Care", "Product_Category_Clothing")
 
+# Variables to exclude for AI Use summaries
+ai_use_variables <- c("Country","Age", "Annual_Salary", "Gender", "Education", "Living_Region",
+                      "Payment_Method_Credit_Debit", "Online_Service_Preference", "AI_Enhance_Experience",
+                      "Payment_Method_COD", "Payment_Method_Ewallet", "Product_Category_Appliances", 
+                      "Product_Category_Electronics", "Product_Category_Groceries",
+                      "Product_Category_Personal_Care", "Product_Category_Clothing")
 
-# Create a stratified summary table of demographic variables by AI_Satisfaction
-ai_satisfaction_summary_canada <- data_country_canada %>%
-  select(-c(exclusion_variables)) %>%  # Exclude variables
+# Create a stratified summary table of demographic variables by AI_Satisfaction/Canada
+canada_summary_dems <- data_country_canada %>%
+  select(-c(demographic_variables)) %>%  
   tbl_summary(
     by = AI_Satisfaction,    # Stratifying by AI_Satisfaction
-    statistic = list(all_categorical() ~ "{n} ({p}%)",  # Categorical summary
-                     all_continuous() ~ "{mean} ({sd})"), # Continuous summary
-    digits = all_continuous() ~ 2  # Round continuous variables to 2 decimal places
+    statistic = list(all_categorical() ~ "{n} ({p}%)",  
+                     all_continuous() ~ "{mean} ({sd})"), 
+    digits = all_continuous() ~ 2  
   ) %>%
   add_p()
 
-
-ai_satisfaction_summary_canada %>%
+canada_summary_dems %>%
   as_gt() %>%
   tab_header(
-    title = "Summary Statistics for Canada"
+    title = "Demographic Statistics for Canada"
   )
 
-# Create a stratified summary table of demographic variables by AI_Satisfaction
-ai_satisfaction_summary_china <- data_country_china %>%
-  select(-c(exclusion_variables)) %>%  # Exclude variables
+# Create a stratified summary table of demographic variables by AI_Satisfaction/Canada
+canada_summary_ai_use <- data_country_canada %>%
+  select(-c(ai_use_variables)) %>%  # 
   tbl_summary(
     by = AI_Satisfaction,    # Stratifying by AI_Satisfaction
-    statistic = list(all_categorical() ~ "{n} ({p}%)",  # Categorical summary
-                     all_continuous() ~ "{mean} ({sd})"), # Continuous summary
-    digits = all_continuous() ~ 2  # Round continuous variables to 2 decimal places
+    statistic = list(all_categorical() ~ "{n} ({p}%)",  
+                     all_continuous() ~ "{mean} ({sd})"), 
+    digits = all_continuous() ~ 2  
   ) %>%
   add_p()
 
-ai_satisfaction_summary_canada %>%
+
+canada_summary_ai_use %>%
   as_gt() %>%
   tab_header(
-    title = "Summary Statistics for China"
+    title = "AI Use Statistics for Canada"
   )
 
-# Create a stratified summary table of demographic variables by AI_Satisfaction
-ai_satisfaction_summary_india <- data_country_india %>%
-  select(-c(exclusion_variables)) %>%  # Exclude variables
+# Create a stratified summary table of demographic variables by AI_Satisfaction/China
+china_summary_dems <- data_country_china %>%
+  select(-c(demographic_variables)) %>%  
   tbl_summary(
     by = AI_Satisfaction,    # Stratifying by AI_Satisfaction
-    statistic = list(all_categorical() ~ "{n} ({p}%)",  # Categorical summary
-                     all_continuous() ~ "{mean} ({sd})"), # Continuous summary
-    digits = all_continuous() ~ 2  # Round continuous variables to 2 decimal places
+    statistic = list(all_categorical() ~ "{n} ({p}%)",  
+                     all_continuous() ~ "{mean} ({sd})"), 
+    digits = all_continuous() ~ 2  
   ) %>%
   add_p()
 
-ai_satisfaction_summary_canada %>%
+china_summary_dems %>%
   as_gt() %>%
   tab_header(
-    title = "Summary Statistics for India"
+    title = "Demographic Statistics for China"
+  )
+
+# Create a stratified summary table of demographic variables by AI_Satisfaction/China
+china_summary_ai_use <- data_country_china %>%
+  select(-c(ai_use_variables)) %>%  # 
+  tbl_summary(
+    by = AI_Satisfaction,    # Stratifying by AI_Satisfaction
+    statistic = list(all_categorical() ~ "{n} ({p}%)",  
+                     all_continuous() ~ "{mean} ({sd})"), 
+    digits = all_continuous() ~ 2  
+  ) %>%
+  add_p()
+
+
+china_summary_ai_use %>%
+  as_gt() %>%
+  tab_header(
+    title = "AI Use Statistics for China"
+  )
+
+# Create a stratified summary table of demographic variables by AI_Satisfaction/India
+india_summary_dems <- data_country_india %>%
+  select(-c(demographic_variables)) %>%  
+  tbl_summary(
+    by = AI_Satisfaction,    # Stratifying by AI_Satisfaction
+    statistic = list(all_categorical() ~ "{n} ({p}%)",  
+                     all_continuous() ~ "{mean} ({sd})"), 
+    digits = all_continuous() ~ 2 
+  ) %>%
+  add_p()
+
+india_summary_dems %>%
+  as_gt() %>%
+  tab_header(
+    title = "Demographic Statistics for India"
+  )
+
+# Create a stratified summary table of demographic variables by AI_Satisfaction/India
+india_summary_ai_use <- data_country_india %>%
+  select(-c(ai_use_variables)) %>%  # 
+  tbl_summary(
+    by = AI_Satisfaction,    # Stratifying by AI_Satisfaction
+    statistic = list(all_categorical() ~ "{n} ({p}%)",  
+                     all_continuous() ~ "{mean} ({sd})"), 
+    digits = all_continuous() ~ 2  
+  ) %>%
+  add_p()
+
+
+india_summary_ai_use %>%
+  as_gt() %>%
+  tab_header(
+    title = "AI Use Statistics for India"
   )
 ```
 
