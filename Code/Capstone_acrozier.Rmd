@@ -16,6 +16,8 @@ library(pROC)
 library(yardstick)
 library(gt)
 library(glmnet)
+library(writexl)
+library(openxlsx)
 
 data <- read_excel("~/GitHub/DSE6311/AI_Retail.xlsx")
 ```
@@ -102,6 +104,8 @@ data <- data %>%
 
 data <- data %>%
   rename(Payment_Method_Credit_Debit = `Payment_Method_Credit/Debit`)
+
+write.xlsx(data, "cleaned_data.xlsx")
 ```
 
 
