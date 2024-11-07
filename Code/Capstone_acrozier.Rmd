@@ -28,6 +28,15 @@ data <- read_excel("~/GitHub/DSE6311/AI_Retail.xlsx")
 data <- data %>%
   rename(AI_Satisfaction = AI_Satisfication)
 
+# Rename the column from AI_Tools_Used_Voice&Photo_Search to AI_Tools_Used_Voice_Photo
+data <- data %>%
+  rename(AI_Tools_Used_Voice_Photo = `AI_Tools_Used_Voice&Photo_Search`)
+
+data <- data %>%
+  mutate(Education = recode(Education, 
+                            "Masters’ Degree" = "Master's Degree"))
+
+
 # Convert AI_Satisfaction to "yes" and "no" values
 data <- data %>%
   mutate(AI_Satisfaction = ifelse(AI_Satisfaction == "Satisfied", "yes", "no"))
@@ -39,7 +48,7 @@ data <- data %>%
 binary_columns <- c("Online_Consumer", "Payment_Method_Credit/Debit", "Living_Region", 
                     "Online_Service_Preference", "AI_Endorsement", "AI_Privacy_No_Trust", 
                     "AI_Enhance_Experience", "AI_Satisfaction", "AI_Tools_Used_Chatbots", 
-                    "AI_Tools_Used_Virtual_Assistant", "AI_Tools_Used_Voice&Photo_Search", 
+                    "AI_Tools_Used_Virtual_Assistant", "AI_Tools_Used_Voice_Photo", 
                     "Payment_Method_COD", "Payment_Method_Ewallet", "Product_Category_Appliances", 
                     "Product_Category_Electronics", "Product_Category_Groceries", 
                     "Product_Category_Personal_Care", "Product_Category_Clothing")
@@ -82,8 +91,8 @@ data <- data %>%
   mutate(
     AI_Tools_Used_Chatbots = as.numeric(AI_Tools_Used_Chatbots),  
     AI_Tools_Used_Virtual_Assistant = as.numeric(AI_Tools_Used_Virtual_Assistant),  
-    `AI_Tools_Used_Voice&Photo_Search` = as.numeric(`AI_Tools_Used_Voice&Photo_Search`),  
-    AI_Usage_Score = (AI_Tools_Used_Chatbots + AI_Tools_Used_Virtual_Assistant + `AI_Tools_Used_Voice&Photo_Search`)
+    AI_Tools_Used_Voice_Photo = as.numeric(AI_Tools_Used_Voice_Photo),  
+    AI_Usage_Score = (AI_Tools_Used_Chatbots + AI_Tools_Used_Virtual_Assistant + AI_Tools_Used_Voice_Photo)
   )
 
 # Categorize AI_Usage based on the sum of tools used
@@ -104,12 +113,89 @@ data <- data %>%
 
 data <- data %>%
   rename(Payment_Method_Credit_Debit = `Payment_Method_Credit/Debit`)
-
-write.xlsx(data, "cleaned_data.xlsx")
 ```
 
 
 ```{r summary statistics, echo=TRUE}
+# Loop over the names of categorical columns (excluding the outcome variable)
+categorical_vars <- c("Country", "Payment_Method_Credit_Debit", "Online_Service_Preference",
+                      "AI_Enhance_Experience", "Payment_Method_COD", "Payment_Method_Ewallet", 
+                      "Product_Category_Appliances", "Product_Category_Electronics", 
+                      "Product_Category_Groceries", "Product_Category_Personal_Care", 
+                      "Product_Category_Clothing", "Age", "Living_Region", "Gender", 
+                      "Education", "AI_Usage", "AI_Trust", "AI_Tools_Used_Chatbots", 
+                      "AI_Tools_Used_Voice_Photo", "AI_Tools_Used_Virtual_Assistant")
+
+
+# Define the order for the Education, Age, Annual_Salary, AI_Usage, and AI_Trust groups
+data$Education <- factor(data$Education, 
+                         levels = c("Highschool Graduate", "University Graduate", "Master's Degree", 
+                                    "Doctorate Degree"))
+data <- data %>%
+  mutate(Age = factor(Age, levels = c("Gen Z", "Millennials", "Gen X", "Baby Boomers")))
+
+data$Annual_Salary <- factor(data$Annual_Salary, 
+                         levels = c("Low", "Medium", "Medium High", "High"))
+
+data$AI_Usage <- factor(data$AI_Usage, 
+                         levels = c("none", "low", "moderate", "high"))
+
+data$AI_Trust <- factor(data$AI_Trust, 
+                         levels = c("Low", "Moderate", "High"))
+
+# Stacked bar chart for Education by AI_Satisfaction
+ggplot(data, aes(x = Education, fill = AI_Satisfaction)) +
+  geom_bar(position = "fill") +
+  labs(title = "AI Satisfaction by Education", y = "Proportion", x = "Education") +
+  scale_fill_manual(values = c("YES" = "#4A4E69", "NO" = "#F28482")) +
+  theme_minimal()
+
+# Stacked bar chart for Annual_Salary by AI_Satisfaction
+ggplot(data, aes(x = Annual_Salary, fill = AI_Satisfaction)) +
+  geom_bar(position = "fill") +
+  labs(title = "AI Satisfaction by Annual Salary", y = "Proportion", x = "Annual Salary") +
+  scale_fill_manual(values = c("YES" = "#4A4E69", "NO" = "#F28482")) +
+  theme_minimal()
+
+# Stacked bar chart for Age by AI_Satisfaction
+ggplot(data, aes(x = Age, fill = AI_Satisfaction)) +
+  geom_bar(position = "fill") +
+  labs(title = "AI Satisfaction by Age", y = "Proportion", x = "Age") +
+  scale_fill_manual(values = c("YES" = "#4A4E69", "NO" = "#F28482")) +
+  theme_minimal()
+
+
+# Stacked bar chart for Country by AI_Satisfaction
+ggplot(data, aes(x = Country, fill = AI_Satisfaction)) +
+  geom_bar(position = "fill") +
+  labs(title = "AI Satisfaction by Country", y = "Proportion", x = "Country") +
+  scale_fill_manual(values = c("YES" = "#4A4E69", "NO" = "#F28482")) +
+  theme_minimal()
+
+# Loop through and create bar plots
+for (var in categorical_vars) {
+  print(
+    ggplot(data, aes_string(x = var, fill = "AI_Satisfaction")) +
+      geom_bar(position = "dodge") +
+      labs(title = paste("Distribution of", var, "by AI Satisfaction"),
+           x = var, y = "Count") +
+      theme_minimal() +
+      scale_fill_manual(values = c("YES" = "#4A4E69", "NO" = "#F28482"))  
+  )
+}
+
+for (var in categorical_vars) {
+  print(
+    ggplot(data, aes_string(x = var, fill = "AI_Satisfaction")) +
+      geom_bar(position = "fill") +
+      labs(title = paste("Proportion of AI Satisfaction by", var),
+           x = var, y = "Proportion") +
+      theme_minimal() +
+      scale_fill_manual(values = c("YES" = "#4A4E69", "NO" = "#F28482"))
+  )
+}
+
+
 # Separate data by country
 data_country_canada <- data %>% filter(Country == "CANADA")
 data_country_china <- data %>% filter(Country == "CHINA")
@@ -117,7 +203,7 @@ data_country_india <- data %>% filter(Country == "INDIA")
 
 # Variables to exclude for demographic summaries
 demographic_variables <- c("Country", "AI_Usage", "AI_Trust", "AI_Tools_Used_Chatbots",
-                           "AI_Tools_Used_Voice&Photo_Search", "AI_Tools_Used_Virtual_Assistant",
+                           "AI_Tools_Used_Voice_Photo", "AI_Tools_Used_Virtual_Assistant",
                            "Payment_Method_Credit_Debit", "Online_Service_Preference", "AI_Enhance_Experience",
                            "Payment_Method_COD", "Payment_Method_Ewallet", "Product_Category_Appliances", 
                            "Product_Category_Electronics", "Product_Category_Groceries", 
@@ -129,6 +215,40 @@ ai_use_variables <- c("Country","Age", "Annual_Salary", "Gender", "Education", "
                       "Payment_Method_COD", "Payment_Method_Ewallet", "Product_Category_Appliances", 
                       "Product_Category_Electronics", "Product_Category_Groceries",
                       "Product_Category_Personal_Care", "Product_Category_Clothing")
+
+# Create a stratified summary table of demographic variables by AI_Satisfaction
+data_summary <- data %>%
+  select(-c(demographic_variables)) %>%  
+  tbl_summary(
+    by = AI_Satisfaction,    # Stratifying by AI_Satisfaction
+    statistic = list(all_categorical() ~ "{n} ({p}%)",  
+                     all_continuous() ~ "{mean} ({sd})"), 
+    digits = all_continuous() ~ 2  
+  ) %>%
+  add_p()
+
+data_summary %>%
+  as_gt() %>%
+  tab_header(
+    title = "Demographic Statistics"
+  )
+
+# Create a stratified summary table of AI Use variables by AI_Satisfaction
+data_summary_ai_use <- data %>%
+  select(-c(ai_use_variables)) %>%  # 
+  tbl_summary(
+    by = AI_Satisfaction,    # Stratifying by AI_Satisfaction
+    statistic = list(all_categorical() ~ "{n} ({p}%)",  
+                     all_continuous() ~ "{mean} ({sd})"), 
+    digits = all_continuous() ~ 2  
+  ) %>%
+  add_p()
+
+data_summary_ai_use %>%
+  as_gt() %>%
+  tab_header(
+    title = "AI Use Statistics"
+  )
 
 # Create a stratified summary table of demographic variables by AI_Satisfaction/Canada
 canada_summary_dems <- data_country_canada %>%
@@ -237,6 +357,7 @@ india_summary_ai_use %>%
 ```
 
 
+
 ```{r satisfaction recipe, echo=TRUE}
 # Convert AI_Satisfaction from YES/NO to 1/0
 data <- data %>%
@@ -255,7 +376,7 @@ satisfaction_recipe <- recipe(
     AI_Enhance_Experience + Payment_Method_COD + Payment_Method_Ewallet + Product_Category_Appliances +
     Product_Category_Electronics + Product_Category_Groceries + Product_Category_Personal_Care +
     Product_Category_Clothing + Age + Living_Region + Annual_Salary + Gender + Education + AI_Usage +
-    AI_Trust + AI_Tools_Used_Chatbots + `AI_Tools_Used_Voice&Photo_Search` + AI_Tools_Used_Virtual_Assistant, 
+    AI_Trust + AI_Tools_Used_Chatbots + AI_Tools_Used_Voice_Photo + AI_Tools_Used_Virtual_Assistant, 
   data = train
 ) %>%
   step_dummy(all_nominal_predictors()) %>%
