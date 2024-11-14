@@ -1,0 +1,231 @@
+---
+title: "DSE_Capstone_EDA_Canfield"
+author: "Ryan Canfield"
+date: "2024-11-10"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+```{r}
+library(tidyverse)      # For data manipulation.
+library(ggplot2)        # For data visualizations. 
+library(RColorBrewer)   # For coloring visuals.
+
+```
+
+```{r}
+# Reading the CSV file into a data frame
+df <- read.csv("cleaned_data.csv")
+
+# Display a preview of the data frame.
+head(df)
+
+```
+# Visualizations:
+## Frequency Bar Charts of Demographic Variables:
+### This table will present frequencies and percentages of key demographic variables, such as country, age, gender, education, and online service preferences. 
+
+```{r}
+# Specify colors for each level 
+country_colors <- c("red", "gold", "orange") 
+age_colors <- c("navy", "darkorchid4", "deeppink3", "salmon")
+gender_colors <- c("pink", "skyblue")     
+education_colors <- c("lightgoldenrod1", "springgreen3", "steelblue2", "slateblue3")  
+OnlineS_colors <- c("darkred", "lightgreen")  
+salary_colors <- c("deepskyblue", "darkolivegreen", "hotpink4", "firebrick3")
+
+
+
+par(mfrow=c(2,3))
+
+# Plot 1: Country 
+barplot(table(df$Country), 
+        col = country_colors,  
+        xlab = "Country", 
+        ylab = "Frequency",
+        main = "Customer Origins", 
+        cex.names = 0.8) 
+
+# Plot 2: Online Service Preference
+barplot(table(df$Online_Service_Preference), 
+        col = OnlineS_colors, 
+        xlab = "Online Shopping", 
+        ylab = "Frequency",
+        main = "Do They Prefer Online Shopping", 
+        cex.names = 0.8)
+
+# Plot 3: Gender 
+barplot(table(df$Gender), 
+        col = gender_colors, 
+        xlab = "Gender", 
+        ylab = "Frequency",
+        main = "Gender of Customer", 
+        cex.names = 0.8)
+
+# Plot 4: Age 
+barplot(table(df$Age), 
+        col = age_colors, 
+        xlab = "Age", 
+        ylab = "Frequency",
+        main = "Age of Customers", 
+        las = 2,        
+        cex.names = 0.8)
+    
+
+# Plot 5: Annual Salary 
+barplot(table(df$Annual_Salary), 
+        col = salary_colors, 
+        xlab = "Salary", 
+        ylab = "Frequency",
+        main = "Customers Salary", 
+        las = 2, 
+        cex.names = 0.8)
+
+
+```
+```{r}
+par(mar=c(5, 4, 4, 2) + 2.4)  # Adjust bottom margin
+# Plot 6: Education 
+barplot(table(df$Education), 
+        col = education_colors, 
+        ylab = "Frequency",
+        main = "Education of Customers", 
+        las = 2,        
+        cex.names = 0.8)       
+
+```
+
+
+## Pie Charts of AI Tool Usage:
+### These pie charts will show the proportion of customers in high, moderate, and low AI usage categories.  
+
+```{r}
+# Calculate the percentage of each category
+AI_usage_percents <- df %>%
+  count(AI_Usage) %>%
+  mutate(Percentage = n / sum(n) * 100)
+
+# Create the pie chart using base R
+pie(AI_usage_percents$Percentage, 
+    labels = paste0(AI_usage_percents$AI_Usage, ": ", round(AI_usage_percents$Percentage, 1), "%"), 
+    col = c('darkred', 'steelblue2', '#28B463', 'goldenrod1'), # Customize colors
+    main = "The Proportion of the Usage Amount of AI from Customers")
+
+```
+
+## Scatterplot of AI Trust vs. AI Satisfaction:
+### This scatter plot will visualize the relationship between the newly created AI_Trust variable and AI satisfaction levels.
+```{r}
+unique(df$AI_Trust)
+unique(df$AI_Satisfaction)
+
+set.seed(3)  # For reproducibility
+
+# Function to generate random number based on category
+generate_random <- function(category) {
+  if (category == "Low") {
+    return(round(runif(1, min = 1, max = 3), 2))  # Random number between 1 and 3
+  } else if (category == "Moderate") {
+    return(round(runif(1, min = 4, max = 7), 2))  # Random number between 4 and 7
+  } else if (category == "High") {
+    return(round(runif(1, min = 8, max = 10), 2))  # Random number between 8 and 10
+  }
+}
+
+# Apply the function to the 'category' column and create a new column with random numbers
+df$Random_Num_based_AITrust <- sapply(df$AI_Trust, generate_random)
+
+# View the result
+head(df)
+```
+
+
+```{r}
+df$Index <- seq_along(df$AI_Trust)
+
+
+# Now create the scatter plot
+ggplot(df, aes(x = Random_Num_based_AITrust, y = Index)) +
+  geom_point(aes(color = AI_Trust), size = 3) +
+  labs(
+    title = "Relationship Between AI Trust and AI Satisfaction",
+    x = "AI Trust Level",
+    y = "AI Satisfaction Count"
+  ) +
+  theme_minimal() +
+  theme(legend.title = element_blank())
+
+
+```
+
+## Histogram of AI Usage Levels: 
+### This histogram will show the distribution of AI usage levels (high, moderate, low) across the dataset. 
+
+```{r}
+# Summarize the data to get frequencies
+data_summary <- df %>%
+  count(Country, AI_Usage)
+
+# Create the bar graph
+ggplot(data_summary, aes(x = Country, y = n, fill = AI_Usage)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Country", y = "Frequency of AI Usage", title = "AI Usage Frequency per Country") +
+  scale_fill_manual(values = c("high" = "dodgerblue2", "moderate" = "#28B463", "low" = "orange", "none" = "firebrick")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid = element_blank())
+
+  
+```
+
+
+```{r}
+# Summarize the data to get frequencies
+data_summary <- df %>%
+  count(AI_Tools_Used_Chatbots, AI_Usage)
+
+# Create the bar graph
+ggplot(data_summary, aes(x = AI_Tools_Used_Chatbots, y = n, fill = AI_Usage)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Used Chatbot", y = "Frequency of AI Usage", title = "AI Sites that Used Chatbots") +
+  scale_fill_manual(values = c("high" = "royalblue", "moderate" = "springgreen3", "low" = "goldenrod1", "none" = "red2")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid = element_blank()) 
+```
+
+
+```{r}
+# Summarize the data to get frequencies
+data_summary <- df %>%
+  count(AI_Tools_Used_Virtual_Assistant, AI_Usage)
+
+# Create the bar graph
+ggplot(data_summary, aes(x = AI_Tools_Used_Virtual_Assistant, y = n, fill = AI_Usage)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Used Virtual Assistant", y = "Frequency of AI Usage", title = "AI Sites that Used Virtual Assistants") +
+  scale_fill_manual(values = c("high" = "slateblue", "moderate" = "darkgreen", "low" = "goldenrod3", "none" = "violetred")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid = element_blank()) 
+```
+
+```{r}
+# Summarize the data to get frequencies
+data_summary <- df %>%
+  count(AI_Tools_Used_Voice_Photo, AI_Usage)
+
+# Create the bar graph
+ggplot(data_summary, aes(x = AI_Tools_Used_Voice_Photo, y = n, fill = AI_Usage)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Used Voice or Photo", y = "Frequency of AI Usage", title = "AI Sites that Used Photos or Voice") +
+  scale_fill_manual(values = c("high" = "turquoise2", "moderate" = "yellowgreen", "low" = "khaki", "none" = "tomato")) +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        panel.grid = element_blank()) 
+```
