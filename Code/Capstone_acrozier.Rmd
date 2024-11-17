@@ -12,7 +12,6 @@ library(tidymodels)
 library(readxl)
 library(corrplot)
 library(gtsummary)
-library(pROC)
 library(yardstick)
 library(gt)
 library(glmnet)
@@ -53,6 +52,7 @@ binary_columns <- c("Online_Consumer", "Payment_Method_Credit/Debit", "Living_Re
                     "Payment_Method_COD", "Payment_Method_Ewallet", "Product_Category_Appliances", 
                     "Product_Category_Electronics", "Product_Category_Groceries", 
                     "Product_Category_Personal_Care", "Product_Category_Clothing")
+
 
 # AC: Convert "no" to 0 and "yes" to 1 in all binary columns
 data <- data %>%
@@ -129,6 +129,8 @@ categorical_vars <- c("Country", "Payment_Method_Credit_Debit", "Online_Service_
                       "Education", "AI_Usage", "AI_Trust", "AI_Tools_Used_Chatbots", 
                       "AI_Tools_Used_Voice_Photo", "AI_Tools_Used_Virtual_Assistant")
 
+freq_vars <- c("Country", "Age", "Living_Region", "Gender", "Education", "AI_Usage", "AI_Trust")
+
 
 # AC: Define the order for the Education, Age, Annual_Salary, AI_Usage, and AI_Trust groups
 data$Education <- factor(data$Education, 
@@ -174,6 +176,7 @@ ggplot(data, aes(x = Country, fill = AI_Satisfaction)) +
   labs(title = "AI Satisfaction by Country", y = "Proportion", x = "Country") +
   scale_fill_manual(values = c("YES" = "#4A4E69", "NO" = "#F28482")) +
   theme_minimal()
+
 
 # AC: Loop through and create bar plots
 for (var in categorical_vars) {
@@ -358,6 +361,7 @@ india_summary_ai_use %>%
     title = "AI Use Statistics for India"
   )
 ```
+
 
 
 
