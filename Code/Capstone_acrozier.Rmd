@@ -37,17 +37,6 @@ data <- read.csv("~/GitHub/DSE6311/encoded_data.csv")
 ```
 
 
-```{r normalize, echo=TRUE}
-# Min-Max Scaling (Normalize)
-min_max_scaled_data <- as.data.frame(lapply(data, function(x) rescale(x, to = c(0, 1))))
-
-# Standardization (Z-Score Scaling)
-standardized_data <- as.data.frame(scale(data))
-
-# View the scaled data
-head(min_max_scaled_data)
-head(standardized_data)
-```
 
 ```{r subset selection, echo=TRUE}
 # Best subset selection
@@ -130,11 +119,136 @@ train <- data[train_index, ]
 test <- data[-train_index, ]
 ```
 
+```{r}
+# Least squares Model
+set.seed(123)
+reg <- lm(AI_Satisfaction ~ ., data = train)
+summary(reg)
+plot(reg)
+
+training_residuals <- data.frame(train$AI_Satisfaction, reg$fitted.values, reg$residuals)
+head(training_residuals)
+
+pred <- predict(reg, newdata = test)
+lm_metrics <- accuracy(pred, test$AI_Satisfaction)
+
+# Ridge regression model
+set.seed(123)
+x <- model.matrix(AI_Satisfaction ~ ., data = train)[, -1]
+y <- train$AI_Satisfaction
+
+cv.out2 <- cv.glmnet(x, y, alpha = 0)
+plot(cv.out2)
+
+lam_min2 <- cv.out2$lambda.min
+ridge.training2 <- glmnet(x, y, alpha = 0, lambda = lam_min2, standardize = TRUE)
+coef(ridge.training2)
+
+x1 <- model.matrix(AI_Satisfaction ~ ., data = test)[, -1]
+y1 <- test$AI_Satisfaction
+
+predict2 <- predict(ridge.training2, s = lam_min2, newx = x1)
+predict2 <- predict2[1:nrow(predict2),]
+
+ridge_metrics <- accuracy(predict2, y1)
+
+# Lasso Model
+set.seed(123)
+x <- model.matrix(AI_Satisfaction ~ ., data = train)[, -1]
+y <- train$AI_Satisfaction
+
+cv.out2 <- cv.glmnet(x, y, alpha =1)
+plot(cv.out2)
+
+lam_min2 <- cv.out2$lambda.min
+lasso.training2 <- glmnet(x, y, alpha = 1, lambda = lam_min2, standardize = TRUE)
+coef(lasso.training2)
+
+x1 <- model.matrix(AI_Satisfaction ~ ., data = test)[, -1]
+y1 <- test$AI_Satisfaction
+
+predict2 <- predict(lasso.training2, s = lam_min2, newx = x1)
+predict2 <- predict2[1:nrow(predict2),]
+
+lasso_metrics <- accuracy(predict2, y1)
+
+
+# PCR Model
+set.seed(123)
+pcr.fit <- pcr(AI_Satisfaction ~ ., data = train, scale = TRUE, validation = 'CV')
+pcr.fit2 <- pcr(AI_Satisfaction ~ ., data = test, scale = TRUE, validation = 'CV')
+
+# Extract the cross-validated errors
+cv_errors <- RMSEP(pcr.fit)$val[1,,]
+cv_errors2 <- RMSEP(pcr.fit2)$val[1,,]
+
+# Plot the validation plot for both models
+matplot(1:length(cv_errors), cv_errors, type = "l", col = "blue", xlab = "Number of components", ylab = "MSEP", ylim = c(0, max(cv_errors, cv_errors2)), main = "Validation Plot for PCR Model")
+matlines(1:length(cv_errors2), cv_errors2, col = "red", lty = 2)
+legend("bottomleft", legend = c("Training Set", "Test Set"), col = c("blue", "red"), lty = c(1, 2))
+x <- model.matrix(AI_Satisfaction ~ ., data = train)[, -1]
+
+cv2 <- RMSEP(pcr.fit2)$val[1,,]
+cv.min <- which.min(cv2) -1
+cv.min
+
+x <- model.matrix(AI_Satisfaction ~ ., data = train)[, -1]
+
+pcr.pred2 <- predict(pcr.fit2, x, ncomp = cv.min)
+pcr.pred2 <- pcr.pred2[1:nrow(pcr.pred2),,]
+
+
+pcr_metrics <- accuracy(pcr.pred2, test$AI_Satisfaction)
+
+# PLS Model
+set.seed(123)
+pls.fit <- plsr(AI_Satisfaction ~ ., data = train, scale = TRUE, validation = 'CV')
+pls.fit2 <- plsr(AI_Satisfaction ~ ., data = test, scale = TRUE, validation = 'CV')
+
+# Extract the cross-validated errors
+cv_errors <- RMSEP(pls.fit)$val[1,,]
+cv_errors2 <- RMSEP(pls.fit2)$val[1,,]
+
+# Plot the validation plot for both models
+matplot(1:length(cv_errors), cv_errors, type = "l", col = "blue", xlab = "Number of components", ylab = "MSEP", ylim = c(0, max(cv_errors, cv_errors2)), main = "Validation Plot for PLS Model")
+matlines(1:length(cv_errors2), cv_errors2, col = "red", lty = 2)
+legend("bottomleft", legend = c("Training Set", "Test Set"), col = c("blue", "red"), lty = c(1, 2))
+
+cv2 <- RMSEP(pls.fit2)$val[1,,]
+cv.min <- which.min(cv2) -1
+cv.min
+
+x <- model.matrix(AI_Satisfaction ~ ., data = train)[, -1]
+
+pls.pred2 <- predict(pls.fit2, x, ncomp = cv.min)
+pls.pred2 <- pls.pred2[1:nrow(pls.pred2),,]
+
+pls_metrics <- accuracy(pls.pred2, test$AI_Satisfaction)
+
+# Compare models based on evaluation metrics
+print("Least Squares Model:")
+print(lm_metrics)
+print("Ridge Regression Model:")
+print(ridge_metrics)
+print("Lasso Model:")
+print(lasso_metrics)
+print("PCR Model:")
+print(pcr_metrics)
+print("PLS Model:")
+print(pls_metrics)
+```
+
+
 
 
 ```{r satisfaction recipe, echo=TRUE}
-# Convert AI_Satisfaction to a factor in the training data
+# Convert AI_Satisfaction to a factor
+data$AI_Satisfaction <- as.factor(data$AI_Satisfaction)
 train$AI_Satisfaction <- as.factor(train$AI_Satisfaction)
+
+# Ensure the levels are correct
+levels(data$AI_Satisfaction) <- c("0", "1")
+
 
 # Define recipe for preprocessing
 satisfaction_recipe <- recipe(
@@ -175,6 +289,122 @@ summary(test_results)
 
 # Check the distribution of the predicted classes ("YES"/"NO")
 table(test_results$type)
+```
+
+```{r logistic regression, echo=TRUE}
+categorical_vars <- c("Country", "Payment_Method_Credit_Debit", "Online_Service_Preference",
+                      "AI_Enhance_Experience", "Payment_Method_COD",  "Payment_Method_Ewallet",
+                      "Product_Category_Appliances","Product_Category_Electronics",
+                      "Product_Category_Groceries",  "Product_Category_Personal_Care",
+                      "Product_Category_Clothing", "Age",  "Living_Region",  "Annual_Salary", "Gender",
+                      "Education", "AI_Trust", "AI_Tools_Used_Chatbots", "AI_Usage",
+                      "AI_Tools_Used_Voice_Photo", "AI_Tools_Used_Virtual_Assistant"
+)
+
+# Ensure AI_Satisfaction is treated as a factor
+data$AI_Satisfaction <- as.factor(data$AI_Satisfaction)
+
+# Identify all categorical predictors (excluding the target variable)
+categorical_vars <- setdiff(names(data), "AI_Satisfaction")
+
+# Define formula for logistic regression using only categorical variables
+formula <- as.formula(paste("AI_Satisfaction ~", paste(categorical_vars, collapse = " + ")))
+
+# Fit logistic regression model
+logistic_model <- glm(formula, data = data, family = "binomial")
+
+# Display summary of the model
+summary(logistic_model)
+
+# Extract and summarize coefficients
+coef_summary <- summary(logistic_model)$coefficients
+
+# Filter for significant predictors (p-value < 0.05)
+significant_predictors <- coef_summary[coef_summary[, "Pr(>|z|)"] < 0.05, ]
+
+# Print significant predictors
+print(significant_predictors)
+```
+
+
+```{r xgboost, echo=TRUE}
+# XGBoost model
+xgb_model <- xgboost(
+  data = as.matrix(data[, categorical_vars]),
+  label = as.numeric(data$AI_Satisfaction) - 1,
+  nrounds = 10,
+  verbose = 0
+)
+
+# Feature importance plot for XGBoost
+importance_matrix <- xgb.importance(feature_names = categorical_vars, model = xgb_model)
+xgb.plot.importance(importance_matrix)
+importance_matrix
+```
+
+
+```{r regression tree, echo=TRUE}
+tree_satisfaction <- tree(AI_Satisfaction ~ . , train)
+summary(tree_satisfaction)
+tree_satisfaction
+
+plot(tree_satisfaction)
+text(tree_satisfaction, cex = 0.5)
+
+test_predictions <- predict(tree_satisfaction, newdata = test)
+test_predictions <- ifelse(test_predictions > 0.5, 1, 0)
+
+cv_model <- cv.tree(tree_satisfaction)
+cv_model
+
+plot(cv_model$size, cv_model$dev, type = "b")
+
+optimal_tree_size <- cv_model$size[which.min(cv_model$dev)]
+optimal_tree_size
+
+satisfaction_pred <- predict(tree_satisfaction, newdata = test)
+
+test_mse <- mean((satisfaction_pred - test$AI_Satisfaction)^2)
+test_mse
+```
+
+
+```{r bagging, echo=TRUE}
+bagging_satisfaction <- randomForest(AI_Satisfaction ~ ., data = train, )
+
+bagging_satisfaction_pred <- predict(bagging_satisfaction, newdata = test)
+bagging_test_mse <- mean((bagging_satisfaction_pred - test$AI_Satisfaction)^2)
+bagging_test_mse
+
+var_importance <- importance(bagging_satisfaction)
+var_importance
+```
+
+
+```{r random forest, echo=TRUE}
+m_values <- c(1, 2, 3, 4, 5)  
+test_mse <- list()
+var_importance <- list()
+
+for (m in m_values) {
+  rf_satisfaction <- randomForest(AI_Satisfaction ~ ., data = train, mtry = m) 
+  rf_satisfaction_pred <- predict(rf_satisfaction, newdata = test)
+  rf_satisfaction_pred <- ifelse(test_predictions > 0.5, 1, 0)
+  test_mse[[as.character(m)]] <- mean((rf_satisfaction_pred - test$AI_Satisfaction)^2)
+  var_importance[[as.character(m)]] <- importance(rf_satisfaction)
+}
+
+# Print test MSE for each value of m
+print(test_mse)
+
+# Print variable importance for each value of m
+print(var_importance)
+
+# Train the Random Forest model with m = 4
+rf_model <- randomForest(AI_Satisfaction ~ ., data = train, mtry = 4)
+
+# Make predictions on the test set
+rf_predictions <- predict(rf_model, newdata = test)
 ```
 
 
